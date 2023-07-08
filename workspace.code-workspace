@@ -1,0 +1,20 @@
+{
+	"folders": [
+		{
+			"path": "blink"
+		},
+		{
+			"path": "hello_world"
+		},
+		{
+			"path": "mcpwm_capture_hc_sr04"
+		},
+		{
+			"path": "mcpwm_servo_control"
+		}
+	],
+	"settings": {
+    "idf.port": "/dev/ttyACM0",
+    "idf.espIdfPath": "${env:HOME}/esp/esp-idf"
+  }
+}

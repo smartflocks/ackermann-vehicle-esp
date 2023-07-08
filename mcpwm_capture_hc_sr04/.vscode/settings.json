@@ -1,0 +1,17 @@
+{
+  "C_Cpp.intelliSenseEngine": "Tag Parser",
+  "idf.adapterTargetName": "esp32s3",
+  "idf.openOcdConfigs": [
+    "board/esp32s3-builtin.cfg"
+  ],
+  "idf.flashType": "UART",
+  "idf.port": "/dev/ttyACM1",
+  "files.associations": {
+    "compare": "cpp",
+    "regex": "c",
+    "array": "c",
+    "string": "c",
+    "string_view": "c",
+    "pwm_capture.h": "c"
+  }
+}
