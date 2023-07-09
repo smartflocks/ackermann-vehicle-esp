@@ -15,70 +15,38 @@
 
 const static char *TAG = "example";
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////// Please update the following configuration according to your board spec ////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#define LISTEN_GPIO  13
-
-
-void blink_task(void *pvParameter);
 
 void app_main(void)
 {
 
-    TaskHandle_t xHandle = NULL;
 
+    pwm_capture_handle_t capture =NULL;
 
-
-    xTaskCreate(blink_task,
-                "stering_task",
-                4096,
-                (void *)14,
-                9,
-                NULL);
-
-    xTaskCreate(blink_task,
-                "throtle_task",
-                4096,
-                (void *)13,
-                10,
-                NULL);
-
-    while (1) {
-        
-        vTaskDelay(pdMS_TO_TICKS(200));
-    }
-
-}
-
-void blink_task(void *pvParameter)
-{
-    int gpio = (int *)pvParameter;
-    mcpwm_capture_timer_config_t cap_conf = {
+    pwm_capture_conf_t config = {
+        .gpio = 13,
+        .group_id = 0,
         .clk_src = MCPWM_CAPTURE_CLK_SRC_DEFAULT,
-        .group_id = gpio == 13 ? 0 : 1,
     };
 
-    callback_conf_t callback_conf = {
-        .gpio = gpio,
-        .task = xTaskGetCurrentTaskHandle(),
-        .cap_val_begin_of_sample = 0,
-        .cap_val_end_of_sample = 0,
+    pwm_capture_handle_t capture2 =NULL;
+
+    pwm_capture_conf_t config2 = {
+        .gpio = 14,
+        .group_id = 1,
+        .clk_src = MCPWM_CAPTURE_CLK_SRC_DEFAULT,
     };
 
-    
-    register_pwm_callback(&callback_conf, &cap_conf);
-    uint32_t current_pwm = 0;
-    uint32_t tof_ticks;
-    
+    pwm_capture_init(&capture, &config);
+    pwm_capture_init(&capture2, &config2);
     while (1) {
-        // wait for echo done signal
-        if (xTaskNotifyWait(0x00, ULONG_MAX, &tof_ticks, pdMS_TO_TICKS(1000)) == pdTRUE) {
-            //ESP_LOGI(TAG, "This never happens %d ", (int)tof_ticks);
-            current_pwm = tof_ticks * (1000000.0 / esp_clk_apb_freq());
-        }
-        ESP_LOGI(TAG, "Current PWM: %d ", (int)current_pwm);
-        vTaskDelay(pdMS_TO_TICKS(20));
+        uint32_t tof_ticks;
+        pwm_capture_get_dutycycle(capture, &tof_ticks);
 
+        uint32_t tof_ticks2;
+        pwm_capture_get_dutycycle(capture2, &tof_ticks2);
+        ESP_LOGI(TAG, "Current PWM Servo: %d ", (int)tof_ticks2);
+        ESP_LOGI(TAG, "Current PWM Motor: %d ", (int)tof_ticks);
+        vTaskDelay(pdMS_TO_TICKS(20));
     }
+
 }

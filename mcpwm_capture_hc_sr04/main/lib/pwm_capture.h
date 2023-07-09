@@ -1,5 +1,6 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
+#include <freertos/queue.h>
 
 #include <esp_err.h>
 #include <esp_attr.h>
@@ -9,22 +10,32 @@
 #include <driver/mcpwm_cap.h>
 #include <driver/gpio.h>
 
-typedef struct callback_conf_t callback_conf_t;
+typedef struct pwm_capture_t *pwm_capture_handle_t;
 
-typedef struct callback_conf_t
-{
+typedef struct pwm_capture_t pwm_capture_t;
+
+typedef struct {
     int gpio;
-    TaskHandle_t * task;
-    uint32_t cap_val_begin_of_sample;
-    uint32_t cap_val_end_of_sample;
-} callback_conf_t;
+    int group_id;
+    mcpwm_capture_clock_source_t clk_src;
+} pwm_capture_conf_t;
 
-typedef struct callback_data_t *callback_data_handle_t;
-
-typedef struct callback_data_t callback_data_t;
-
+struct pwm_capture_t {
+    esp_err_t (*get_duty_width)(pwm_capture_t *pwm_capture, uint32_t * width);
+    esp_err_t (*get_duty)(pwm_capture_t *pwm_capture, uint32_t * dc);
+};
 
 esp_err_t
-register_pwm_callback(
-    callback_conf_t * callback_conf,
-    const mcpwm_capture_timer_config_t * conf);
+pwm_capture_init(
+    pwm_capture_handle_t * pwm_capture,
+    const pwm_capture_conf_t * conf);
+
+esp_err_t
+pwm_capture_get_duty_width(
+    pwm_capture_handle_t pwm_capture,
+    uint32_t * width);
+
+esp_err_t
+pwm_capture_get_dutycycle(
+    pwm_capture_handle_t pwm_capture,
+    uint32_t * dc);
