@@ -11,7 +11,7 @@
 #include "driver/mcpwm_cap.h"
 #include "driver/gpio.h"
 
-#include "lib/pwm_capture.h"
+#include "pwm_capture.h"
 
 const static char *TAG = "example";
 

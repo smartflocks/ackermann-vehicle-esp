@@ -4,7 +4,7 @@
 #include "esp_log.h"
 #include "driver/mcpwm_prelude.h"
 
-#include "lib/pwm_generator.h"
+#include "pwm_generator.h"
 
 static const char *TAG = "example";
 
