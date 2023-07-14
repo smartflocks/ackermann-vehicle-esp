@@ -1,10 +1,29 @@
-| Supported Targets | ESP32 | ESP32-C6 | ESP32-H2 | ESP32-S3 |
-| ----------------- | ----- | -------- | -------- | -------- |
+| Tested Targets | ESP32-S3 |
+| -------------- | -------- |
+
 # MCPWM RC Servo Control Example
 
-(See the README.md file in the upper level 'examples' directory for more information about examples.)
+This example illustrates how to drive a typical [RC Servo](https://en.wikipedia.org/wiki/Servo_%28radio_control%29) by sending a PWM signal using the pwm generator component without using the MCPWM driver directly. The PWM pulse has a frequency of 50Hz (period of 20ms), and the active-high time (which controls the rotation) ranges from 0.5s to 2.5ms with 1.5ms always being center of range.
 
-This example illustrates how to drive a typical [RC Servo](https://en.wikipedia.org/wiki/Servo_%28radio_control%29) by sending a PWM signal using the MCPWM driver. The PWM pulse has a frequency of 50Hz (period of 20ms), and the active-high time (which controls the rotation) ranges from 0.5s to 2.5ms with 1.5ms always being center of range.
+Control Signal:
+
+```
+
+  Minimum 0.5ms  +-+                +-+                +-+         ┌--▲-┐ 
+                 | |                | |                | |         |●   | Maximum Left
+                 | |                | |                | |         └----┘
+        ---------+ +----------------+ +----------------+ +--------
+  Neutral 1.5ms  +---+              +---+              +---+       ┌----┐ 
+                 |   |              |   |              |   |       |●   ► Center Position
+                 |   |              |   |              |   |       └----┘
+        ---------+   +--------------+   +--------------+   +------
+  Maximum 2.5ms  +-----+            +-----+            +----+      ┌----┐ 
+                 |     |            |     |            |    |      |●   | Maximum Right
+                 |     |            |     |            |    |      └--▼-┘
+        ---------+     +------------+     +------------+    +-----
+                  <----------------->
+                          20ms
+```
 
 ## How to Use Example
 
@@ -17,7 +36,7 @@ This example illustrates how to drive a typical [RC Servo](https://en.wikipedia.
 Connection :
 
 ```
-      ESP Board              Servo Motor      5V
+      ESP Board              Servo Motor     5V~6V
 +-------------------+     +---------------+    ^
 |  SERVO_PULSE_GPIO +-----+PWM        VCC +----+
 |                   |     |               |
@@ -29,11 +48,11 @@ Note that, some kind of servo might need a higher current supply than the develo
 
 ### Build and Flash
 
-Run `idf.py -p PORT flash monitor` to build, flash and monitor the project.
+Run `idf.py -p PORT flash monitor` to build, flash and monitor the project or use the VS Code flash and monitor 🔥
 
 (To exit the serial monitor, type ``Ctrl-]``.)
 
-See the [Getting Started Guide](https://docs.espressif.com/projects/esp-idf/en/latest/get-started/index.html) for full steps to configure and use ESP-IDF to build projects.
+See the [Getting Started Guide](https://docs.espressif.com/projects/esp-idf/en/latest/get-started/index.html) for full steps to configure and use ESP-IDF to build projects or using the [VS Code extention](https://github.com/espressif/vscode-esp-idf-extension/blob/master/docs/tutorial/basic_use.md)
 
 
 ## Example Output

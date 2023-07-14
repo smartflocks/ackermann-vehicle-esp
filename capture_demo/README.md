@@ -1,29 +1,33 @@
-| Supported Targets | ESP32 | ESP32-C6 | ESP32-H2 | ESP32-S3 |
-| ----------------- | ----- | -------- | -------- | -------- |
+| Tested Targets | ESP32-S3 |
+| -------------- | -------- |
 
-# HC-SR04 Example based on MCPWM Capture
+# PWM capture
 
-(See the README.md file in the upper level 'examples' directory for more information about examples.)
+The capture module in MCPWM peripheral is designed to accurately log the time stamp on the hardware side when an event happens (compared to GPIO ISR which requires a software-based logging method). Each capture unit has three channels, which can be used together to capture IO events in parallel but in the capture component we only use one channel per group
 
-The capture module in MCPWM peripheral is designed to accurately log the time stamp on the hardware side when an event happens (compared to GPIO ISR which requires a software-based logging method). Each capture unit has three channels, which can be used together to capture IO events in parallel.
-
-This example shows how to make use of the hardware features to decode the pulse width signals generated from a common HC-SR04 sonar sensor -- [HC-SR04](https://www.sparkfun.com/products/15569).
-
-The signal that HC-SR04 produces (and what can be handled by this example) is a simple pulse whose width indicates the measured distance. An excitation pulse is required to send to HC-SR04 on `Trig` pin to begin a new measurement. Then the pulse described above will appear on the `Echo` pin after a while.
+This example shows how to use the make use of the pwm_capture component hardware features to decode the pulse width signals generated from a RC radio signal
 
 Typical signals:
 
 ```
-Trig       +-----+
-           |     |
-           |     |
-      -----+     +-----------------------
-Echo                   +-----+
-                       |     |
-                       |     |
-      -----------------+     +-----------
-
- +--------------------------------------->
+^
+| 20% modulation +-+    +-+    +-+    +-+    +-+
+|                | |    | |    | |    | |    | |
+|                | |    | |    | |    | |    | |
+|       ---------+ +----+ +----+ +----+ +----+ +----
+| 40% modulation +--+   +--+   +--+   +--+   +--+
+|                |  |   |  |   |  |   |  |   |  |
+|                |  |   |  |   |  |   |  |   |  |
+|       ---------+  +---+  +---+  +---+  +---+  +---
+| 60% modulation +---+  +---+  +---+  +---+  +---+
+|                |   |  |   |  |   |  |   |  |   |
+|                |   |  |   |  |   |  |   |  |   |
+|       ---------+   +--+   +--+   +--+   +--+   +--
+| 80% modulation +----+ +----+ +----+ +----+ +----+
+|                |    | |    | |    | |    | |    |
+|                |    | |    | |    | |    | |    |
+|       ---------+    +-+    +-+    +-+    +-+    +-
++--------------------------------------------------->
                 Timeline
 ```
 
@@ -32,31 +36,30 @@ Echo                   +-----+
 ### Hardware Required
 
 * An ESP development board that features the MCPWM peripheral
-* An HC-SR04 sensor module
+* An RC receiver module
 
 Connection :
 
 ```
         +------+              +---------------------------------+
-+-------+      |              |                                 |
-|       |  VCC +--------------+ 5V                              |
-+-------+      |              |                                 |
-        + Echo +----=====>----+ GPIO18 (internal pull up)       |
         |      |              |                                 |
-        + Trig +----<=====----+ GPIO19                          |
+        + PWM  +----=====>----+ GPIO13 (internal pull up)       |
+        |      |              |                                 |
+        |  VCC +--------------+ 5V                              |
+        |      |              |                                 |
++-------+  GND +--------------+ GND                             |
 +-------|      |              |                                 |
-|       |  GND +--------------+ GND                             |
 +-------|      |              |                                 |
         +------+              +---------------------------------+
 ```
 
 ### Build and Flash
 
-Run `idf.py -p PORT flash monitor` to build, flash and monitor the project.
+Run `idf.py -p PORT flash monitor` to build, flash and monitor the project or use the VS Code flash and monitor 🔥
 
 (To exit the serial monitor, type ``Ctrl-]``.)
 
-See the [Getting Started Guide](https://docs.espressif.com/projects/esp-idf/en/latest/get-started/index.html) for full steps to configure and use ESP-IDF to build projects.
+See the [Getting Started Guide](https://docs.espressif.com/projects/esp-idf/en/latest/get-started/index.html) for full steps to configure and use ESP-IDF to build projects or using the [VS Code extention](https://github.com/espressif/vscode-esp-idf-extension/blob/master/docs/tutorial/basic_use.md)
 
 ## Example Output
 
@@ -82,4 +85,4 @@ This example runs at 10Hz sampling rate. Measure data that out of the range is d
 
 ## Troubleshooting
 
-For any technical queries, please open an [issue] (https://github.com/espressif/esp-idf/issues) on GitHub. We will get back to you soon.
+For any technical queries, please open an [issue](https://github.com/smartflocks/ackermann-vehicle-esp/issues) on GitHub.
