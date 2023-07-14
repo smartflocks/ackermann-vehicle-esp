@@ -120,8 +120,6 @@ I (508) capture_demo: Current PWM A: 1508
 
 ```
 
-This example runs at 10Hz sampling rate. Measure data that out of the range is dropped and only valid measurement is printed out.
-
 ## Troubleshooting
 
 For any technical queries, please open an [issue](https://github.com/smartflocks/ackermann-vehicle-esp/issues) on GitHub.

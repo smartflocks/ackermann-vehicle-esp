@@ -6,7 +6,7 @@ This Repo is mean to create a ESP controller for a small RC car is used also as 
 
 - [X] [PWM Generator](components/pwm_generator)
 - [X] [PWM Capture](components/pwm_capture)
-- [ ] PWM logger
+- [X] [PWM hook](components/pwm_hook)
 - [ ] AS5047
 - [ ] WT901B
 
@@ -14,7 +14,7 @@ This Repo is mean to create a ESP controller for a small RC car is used also as 
 
 - [X] [Generator Demo](generator_demo)
 - [X] [Capture Demo](capture_demo)
-- [ ] Logger Demo
+- [X] [Hook Demo](hook_demo)
 - [ ] Microros Generator Demo
 - [ ] Microros Logger Demo
 - [ ] AS5047 Sensor Demo

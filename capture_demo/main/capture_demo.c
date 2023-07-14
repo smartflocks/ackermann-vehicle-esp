@@ -1,9 +1,3 @@
-/*
- * SPDX-FileCopyrightText: 2021-2022 Espressif Systems (Shanghai) CO LTD
- *
- * SPDX-License-Identifier: Unlicense OR CC0-1.0
- */
-
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_log.h"
@@ -48,7 +42,7 @@ void app_main(void)
         pwm_output_t tof_ticks_b;
         pwm_capture_get_duty_width(capture_b, &tof_ticks_b);
         ESP_LOGI(TAG, "Current PWM A: %d ", (int)tof_ticks_a.width_us);
-        ESP_LOGI(TAG, "Current PWM B: %d ", (int)tof_ticks_a.timestamp);
+        ESP_LOGI(TAG, "Current PWM B: %d ", (int)tof_ticks_b.width_us);
         vTaskDelay(pdMS_TO_TICKS(20));
     }
 

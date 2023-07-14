@@ -125,8 +125,6 @@ I (599) example: Dutycycle A: 1588
 ...
 ```
 
-The servo will rotate from -90 degree to 90 degree, and then turn back again.
-
 ## Troubleshooting
 
-For any technical queries, please open an [issue] (https://github.com/espressif/esp-idf/issues) on GitHub. We will get back to you soon.
+For any technical queries, please open an [issue](https://github.com/smartflocks/ackermann-vehicle-esp/issues) on GitHub.
