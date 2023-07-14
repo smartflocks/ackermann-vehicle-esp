@@ -42,13 +42,13 @@ void app_main(void)
     pwm_capture_init(&capture_a, &config_a);
     pwm_capture_init(&capture_b, &config_b);
     while (1) {
-        uint32_t tof_ticks_a;
-        pwm_capture_get_dutycycle(capture_a, &tof_ticks_a);
+        pwm_output_t tof_ticks_a;
+        pwm_capture_get_duty_width(capture_a, &tof_ticks_a);
 
-        uint32_t tof_ticks_b;
-        pwm_capture_get_dutycycle(capture_b, &tof_ticks_b);
-        ESP_LOGI(TAG, "Current PWM A: %d ", (int)tof_ticks_a);
-        ESP_LOGI(TAG, "Current PWM B: %d ", (int)tof_ticks_b);
+        pwm_output_t tof_ticks_b;
+        pwm_capture_get_duty_width(capture_b, &tof_ticks_b);
+        ESP_LOGI(TAG, "Current PWM A: %d ", (int)tof_ticks_a.width_us);
+        ESP_LOGI(TAG, "Current PWM B: %d ", (int)tof_ticks_a.timestamp);
         vTaskDelay(pdMS_TO_TICKS(20));
     }
 

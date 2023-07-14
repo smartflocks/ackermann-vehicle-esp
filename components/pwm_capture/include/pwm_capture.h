@@ -20,9 +20,14 @@ typedef struct {
     mcpwm_capture_clock_source_t clk_src;
 } pwm_capture_conf_t;
 
+typedef struct pwm_output_t {
+    uint32_t width;
+    uint32_t width_us;
+    uint32_t timestamp;
+} pwm_output_t; 
+
 struct pwm_capture_t {
-    esp_err_t (*get_duty_width)(pwm_capture_t *pwm_capture, uint32_t * width);
-    esp_err_t (*get_duty)(pwm_capture_t *pwm_capture, uint32_t * dc);
+    esp_err_t (*get_duty_width)(pwm_capture_t *pwm_capture, pwm_output_t * width);
 };
 
 esp_err_t
@@ -33,9 +38,4 @@ pwm_capture_init(
 esp_err_t
 pwm_capture_get_duty_width(
     pwm_capture_handle_t pwm_capture,
-    uint32_t * width);
-
-esp_err_t
-pwm_capture_get_dutycycle(
-    pwm_capture_handle_t pwm_capture,
-    uint32_t * dc);
+    pwm_output_t * width);

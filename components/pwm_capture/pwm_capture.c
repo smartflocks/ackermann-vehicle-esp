@@ -10,24 +10,16 @@ typedef struct
     mcpwm_cap_channel_handle_t cap_chan;
     uint32_t cap_val_begin_of_sample;
     uint32_t cap_val_end_of_sample;
+    uint32_t resolution;
+    uint32_t frequency;
     QueueHandle_t queue;
 
 } pwm_capture_impl_t;
 
-
-esp_err_t
-pwm_capture_get_dutycycle(
-    pwm_capture_handle_t pwm_capture,
-    uint32_t * dc)
-{
-    return pwm_capture->get_duty(pwm_capture, dc);
-
-}
-
 esp_err_t
 pwm_capture_get_duty_width(
     pwm_capture_handle_t pwm_capture,
-    uint32_t * width)
+    pwm_output_t * width)
 {
     return pwm_capture->get_duty_width(pwm_capture, width);
 }
@@ -35,7 +27,7 @@ pwm_capture_get_duty_width(
 static esp_err_t
 pwm_get_duty_width(
     pwm_capture_t * pwm_capture,
-    uint32_t * width)
+    pwm_output_t * width)
 {
     pwm_capture_impl_t *pwm_capture_impl = __containerof(pwm_capture, pwm_capture_impl_t, base);
     if( xQueueReceive(pwm_capture_impl->queue,
@@ -48,23 +40,6 @@ pwm_get_duty_width(
     return ESP_FAIL;
 
 }
-
-static esp_err_t
-pwm_get_dutycycle(
-    pwm_capture_t * pwm_capture,
-    uint32_t * dutycycle)
-{
-    uint32_t width;
-
-    ESP_RETURN_ON_ERROR(pwm_get_duty_width(pwm_capture, &width), TAG, "Failed recover width");
-
-    *dutycycle = width * (1000000.0 / esp_clk_apb_freq());;
-
-    return ESP_OK;
-
-}
-
-
 
 bool pwm_capture_callback(mcpwm_cap_channel_handle_t cap_chan, const mcpwm_capture_event_data_t *edata, void *user_data)
 {
@@ -82,8 +57,13 @@ bool pwm_capture_callback(mcpwm_cap_channel_handle_t cap_chan, const mcpwm_captu
         impl->cap_val_end_of_sample = edata->cap_value;
         uint32_t tof_ticks = impl->cap_val_end_of_sample - impl->cap_val_begin_of_sample;
 
-        // notify the task to calculate the distance
-        xQueueOverwriteFromISR( impl->queue, &tof_ticks, &high_task_wakeup);
+        // push value to the queue
+        pwm_output_t pwm_output = {
+            .width = tof_ticks, // Send width
+            .width_us = tof_ticks * (1000000.0 /impl->frequency), // Send width in US
+            .timestamp = (edata->cap_value * 1000.0)/impl->resolution, // Send timestamp bounded to 60s
+        };
+        xQueueOverwriteFromISR( impl->queue, &pwm_output, &high_task_wakeup);
 
     }
 
@@ -101,8 +81,9 @@ pwm_capture_init(
 
     pwm_capture_impl->cap_val_begin_of_sample = 0;
     pwm_capture_impl->cap_val_end_of_sample = 0;
+    pwm_capture_impl->frequency = esp_clk_apb_freq();
 
-    pwm_capture_impl->queue = xQueueCreate( 1, sizeof( uint32_t) );
+    pwm_capture_impl->queue = xQueueCreate( 1, sizeof(struct pwm_output_t) );
 
     mcpwm_capture_timer_config_t cap_conf = {
         .clk_src = MCPWM_CAPTURE_CLK_SRC_DEFAULT,
@@ -112,6 +93,8 @@ pwm_capture_init(
     ESP_LOGI(TAG, "Initialize capture timer");
 
     ESP_RETURN_ON_ERROR(mcpwm_new_capture_timer(&cap_conf, &pwm_capture_impl->cap_timer), TAG, "Failed to initialize the timer");
+
+    ESP_RETURN_ON_ERROR(mcpwm_capture_timer_get_resolution(pwm_capture_impl->cap_timer, &pwm_capture_impl->resolution), TAG, "Failed to get timer resolution");
 
     mcpwm_capture_channel_config_t cap_ch_conf = {
         .gpio_num = conf->gpio,
@@ -145,7 +128,6 @@ pwm_capture_init(
     ESP_LOGI(TAG, "Timer enable and running");
 
     pwm_capture_impl->base.get_duty_width = pwm_get_duty_width;
-    pwm_capture_impl->base.get_duty = pwm_get_dutycycle;
 
     ESP_LOGI(TAG, "Functions register in base");
 
