@@ -61,23 +61,67 @@ Run the example, you will see the following output log:
 
 ```
 ...
-I (0) cpu_start: Starting scheduler on APP CPU.
-I (305) example: Create timer and operator
-I (305) example: Connect timer and operator
-I (305) example: Create comparator and generator from the operator
-I (315) gpio: GPIO[44]| InputEn: 0| OutputEn: 1| OpenDrain: 0| Pullup: 1| Pulldown: 0| Intr:0
-I (325) example: Set generator action on timer and compare event
-I (335) example: Enable and start timer
-I (335) example: Angle of rotation: 0
-I (1345) example: Angle of rotation: 2
-I (2345) example: Angle of rotation: 4
-I (3345) example: Angle of rotation: 6
-I (4345) example: Angle of rotation: 8
-I (5345) example: Angle of rotation: 10
-I (6345) example: Angle of rotation: 12
-I (7345) example: Angle of rotation: 14
-I (8345) example: Angle of rotation: 16
-I (9345) example: Angle of rotation: 18
+I (0) cpu_start: App cpu up.
+I (190) cpu_start: Pro cpu start user code
+I (190) cpu_start: cpu freq: 160000000 Hz
+I (191) cpu_start: Application information:
+I (193) cpu_start: Project name:     generator_demo
+I (199) cpu_start: App version:      4f1d914-dirty
+I (204) cpu_start: Compile time:     Jul 14 2023 09:43:27
+I (210) cpu_start: ELF file SHA256:  5a8248f82ad2153d...
+I (216) cpu_start: ESP-IDF:          v5.1-dirty
+I (222) cpu_start: Min chip rev:     v0.0
+I (226) cpu_start: Max chip rev:     v0.99 
+I (231) cpu_start: Chip rev:         v0.1
+I (236) heap_init: Initializing. RAM available for dynamic allocation:
+I (243) heap_init: At 3FC94468 len 000552A8 (340 KiB): DRAM
+I (249) heap_init: At 3FCE9710 len 00005724 (21 KiB): STACK/DRAM
+I (256) heap_init: At 3FCF0000 len 00008000 (32 KiB): DRAM
+I (262) heap_init: At 600FE010 len 00001FF0 (7 KiB): RTCRAM
+I (270) spi_flash: detected chip: generic
+I (273) spi_flash: flash io: dio
+W (277) spi_flash: Detected size(8192k) larger than the size in the binary image header(2048k). Using the size in the binary image header.
+I (290) sleep: Configure to isolate all GPIO pins in sleep state
+I (297) sleep: Enable automatic switching of GPIO sleep configuration
+I (304) app_start: Starting scheduler on CPU0
+I (309) app_start: Starting scheduler on CPU1
+I (309) main_task: Started on CPU0
+I (319) main_task: Calling app_main()
+I (319) example: Create timer and operator
+I (329) pwm_generator: Connect timer and operator
+I (329) pwm_generator: Create comparator and generator from the operator
+I (339) gpio: GPIO[1]| InputEn: 0| OutputEn: 1| OpenDrain: 0| Pullup: 1| Pulldown: 0| Intr:0 
+I (349) pwm_generator: Set generator action on timer and compare event
+I (359) pwm_generator: Enable and start timer
+I (359) pwm_generator: Timer enable and running
+I (369) pwm_generator: Functions register in base
+I (369) pwm_generator: Initialization ended
+I (379) pwm_generator: Connect timer and operator
+I (379) pwm_generator: Create comparator and generator from the operator
+I (389) gpio: GPIO[2]| InputEn: 0| OutputEn: 1| OpenDrain: 0| Pullup: 1| Pulldown: 0| Intr:0 
+I (399) pwm_generator: Set generator action on timer and compare event
+I (409) pwm_generator: Enable and start timer
+I (409) pwm_generator: Timer enable and running
+I (419) pwm_generator: Functions register in base
+I (419) pwm_generator: Initialization ended
+I (429) example: Starting loop
+I (429) example: Dutycycle A: 1500 
+I (439) example: Dutycycle B: 1500 
+I (459) example: Dutycycle A: 1511 
+I (459) example: Dutycycle B: 1488 
+I (479) example: Dutycycle A: 1522 
+I (479) example: Dutycycle B: 1477 
+I (499) example: Dutycycle A: 1533 
+I (499) example: Dutycycle B: 1466 
+I (519) example: Dutycycle A: 1544 
+I (519) example: Dutycycle B: 1455 
+I (539) example: Dutycycle A: 1555 
+I (539) example: Dutycycle B: 1444 
+I (559) example: Dutycycle A: 1566 
+I (559) example: Dutycycle B: 1433 
+I (579) example: Dutycycle A: 1577 
+I (579) example: Dutycycle B: 1422 
+I (599) example: Dutycycle A: 1588 
 ...
 ```
 
