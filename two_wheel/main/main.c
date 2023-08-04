@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <math.h>
 #include "sdkconfig.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -18,6 +19,7 @@ static const char *TAG = "two_wheel_control";
 #define SERIAL_STUDIO_DEBUG           CONFIG_SERIAL_STUDIO_DEBUG
 
 #define CAPTURE_GPIO_A 13
+#define CAPTURE_GPIO_B 14
 
 #define BDC_MCPWM_TIMER_RESOLUTION_HZ 10000000 // 10MHz, 1 tick = 0.1us
 #define BDC_MCPWM_FREQ_HZ             250000    // 250KHz PWM
@@ -37,6 +39,10 @@ static const char *TAG = "two_wheel_control";
 #define BDC_PID_LOOP_PERIOD_MS        10   // calculate the motor speed every 10ms
 #define BDC_PID_EXPECT_SPEED          15  // expected motor speed, in the pulses counted by the rotary encoder
 
+
+#define WHEEL_RADIUS 0.03 // 30.0mm
+#define BASE_WIDTH 0.09 // 90.0mm
+
 typedef struct {
     motor_control_handle_t motor_control_a;
     motor_control_handle_t motor_control_b;
@@ -45,23 +51,16 @@ typedef struct {
     QueueHandle_t throtle_queue;
 } motor_control_context_t;
 
-static uint32_t scale_value(uint32_t output)
-{
-    float old_min = 1500;
-    float old_max = 2500;
-    float new_min = 0;
-    float new_max = 35;
+typedef struct motor_control_input_t {
+    int32_t throtle;
+    int32_t stearing;
+} motor_control_input_t;
 
-    // Scale the value to the new range
-    float new_value = (output - old_min) * (new_max - new_min) / (old_max - old_min) + new_min;
-
-    return new_value;
-}
-static uint32_t scale_value2(uint32_t output)
+static int32_t scale_value(uint32_t output)
 {
-    float old_min = 1500;
+    float old_min = 500;
     float old_max = 2500;
-    float new_min = 0;
+    float new_min = -35;
     float new_max = 35;
 
     // Scale the value to the new range
@@ -86,7 +85,11 @@ int pid_loop(motor_control_handle_t motor, pid_ctrl_block_handle_t pid_ctrl, int
     // set the new speed
     pid_compute(pid_ctrl, error, &new_speed);
     //ESP_LOGI(TAG, "Error %f.2", new_speed);
-    motor_set_speed(motor, (uint32_t)abs(new_speed));
+    motor_control_direction new_direction = new_speed > 0 ? MOTOR_CONTROL_DIRECTION_FORWARD : MOTOR_CONTROL_DIRECTION_BACKWARD;
+        
+    motor_set_direction(motor, new_direction);
+    
+    motor_set_speed(motor, (uint32_t)fabs(new_speed));
     return cur_pulse_count;
 }
 
@@ -95,6 +98,7 @@ static void pid_loop_cb(void *args)
     static int last_pulse_count_a = 0;
     static int last_pulse_count_b = 0;
     static int32_t throtle = 0;
+    static int32_t stearing = 0;
     motor_control_context_t *ctx = (motor_control_context_t *)args;
     pid_ctrl_block_handle_t pid_ctrl_a = ctx->pid_ctrl_a;
     pid_ctrl_block_handle_t pid_ctrl_b = ctx->pid_ctrl_b;
@@ -120,7 +124,7 @@ void app_main(void)
         .throtle_queue = NULL,
     };
 
-    motor_ctrl_ctx.throtle_queue = xQueueCreate(60, sizeof(int32_t));
+    motor_ctrl_ctx.throtle_queue = xQueueCreate(1, sizeof(int32_t));
 
     pwm_capture_handle_t capture_a =NULL;
 
@@ -130,7 +134,17 @@ void app_main(void)
         .clk_src = MCPWM_CAPTURE_CLK_SRC_DEFAULT,
     };
 
+    pwm_capture_handle_t capture_b =NULL;
+
+    pwm_capture_conf_t config_b = {
+        .gpio = CAPTURE_GPIO_B,
+        .group_id = 1,
+        .clk_src = MCPWM_CAPTURE_CLK_SRC_DEFAULT,
+    };
+
     pwm_capture_init(&capture_a, &config_a);
+
+    pwm_capture_init(&capture_b, &config_b);
 
     ESP_LOGI(TAG, "Initialize motor control");
 
@@ -206,44 +220,39 @@ void app_main(void)
     ESP_LOGI(TAG, "Start motor speed loop");
     ESP_ERROR_CHECK(esp_timer_start_periodic(pid_loop_timer, BDC_PID_LOOP_PERIOD_MS * 1000));
 
-
+    int last_pulse_count_a = 0;
+    int last_pulse_count_b = 0;
 
     while (1) {
         
         vTaskDelay(pdMS_TO_TICKS(20));
-        // the following logging format is according to the requirement of serial-studio frame format
-        // also see the dashboard config file `serial-studio-dashboard.json` for more information
         pwm_output_t tof_ticks_a;
         ESP_ERROR_CHECK(pwm_capture_get_duty_width(capture_a, &tof_ticks_a));
-        int32_t speed = 0;
+        pwm_output_t tof_ticks_b;
+        ESP_ERROR_CHECK(pwm_capture_get_duty_width(capture_b, &tof_ticks_b));
+
+        int32_t throtle = 0;
+        int32_t steering = 0;
 
         motor_control_direction new_direction = tof_ticks_a.width_us > 1500 ? MOTOR_CONTROL_DIRECTION_FORWARD : MOTOR_CONTROL_DIRECTION_BACKWARD;
         if(current_direction != new_direction)
         {
             ESP_LOGI(TAG, "Change direction");
             int32_t zero_speed = 0;
-            xQueueSend(motor_ctrl_ctx.throtle_queue, &zero_speed, 0);
+            xQueueOverwrite(motor_ctrl_ctx.throtle_queue, &zero_speed);
             pid_reset_ctrl_block(motor_ctrl_ctx.pid_ctrl_a);
             pid_reset_ctrl_block(motor_ctrl_ctx.pid_ctrl_b);
-            ESP_ERROR_CHECK(motor_set_direction(motor_ctrl_ctx.motor_control_a, new_direction));
-            ESP_ERROR_CHECK(motor_set_direction(motor_ctrl_ctx.motor_control_b, new_direction));
+            
             current_direction = new_direction;
         }
 
-        switch (current_direction)
-        {
-        case MOTOR_CONTROL_DIRECTION_FORWARD:
-            speed = scale_value(tof_ticks_a.width_us);
-            break;
-        case MOTOR_CONTROL_DIRECTION_BACKWARD:
-            speed = scale_value2(tof_ticks_a.width_us);
-            break;
-        default:
-            break;
-        }
+
+        throtle = scale_value(tof_ticks_a.width_us);
+        steering = scale_value(tof_ticks_b.width_us);
+
         //ESP_LOGI(TAG, "Speed: %d", (int)speed);
-        //ESP_LOGI(TAG, "Current PWM A: %d ", (int)tof_ticks_a.width_us);
-        xQueueSend(motor_ctrl_ctx.throtle_queue, &speed, 0);      
+        //ESP_LOGI(TAG, "Current PWM A: %d ", (int)tof_ticks_b.width_us);
+        xQueueOverwrite(motor_ctrl_ctx.throtle_queue, &throtle);      
 
     }
 }
