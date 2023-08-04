@@ -53,7 +53,7 @@ typedef struct {
 
 typedef struct motor_control_input_t {
     int32_t throtle;
-    int32_t stearing;
+    int32_t steering;
 } motor_control_input_t;
 
 static int32_t scale_value(uint32_t output)
@@ -70,7 +70,7 @@ static int32_t scale_value(uint32_t output)
 }
 
 
-int pid_loop(motor_control_handle_t motor, pid_ctrl_block_handle_t pid_ctrl, int expected_speed, int last_pulse_count)
+int pid_loop(motor_control_handle_t motor, pid_ctrl_block_handle_t pid_ctrl, int throtle, int steering, int last_pulse_count, bool is_left)
 {
     // get the result from rotary encoder
     int cur_pulse_count = 0;
@@ -79,12 +79,26 @@ int pid_loop(motor_control_handle_t motor, pid_ctrl_block_handle_t pid_ctrl, int
 
 
     // calculate the speed error
-    float error = expected_speed - real_pulses;
+    double target_v = throtle / (35/3.1614);
+    double target_w = steering;
+    double r_2 = WHEEL_RADIUS * 2;
+    double v_2 = target_v * 2;
+    double l_w = BASE_WIDTH * target_w;
+
+    double speed = is_left ? (v_2 - l_w) / r_2 : (v_2 + l_w) / r_2;
+
+    float error = speed - real_pulses;
     float new_speed = 0;
 
     // set the new speed
     pid_compute(pid_ctrl, error, &new_speed);
-    //ESP_LOGI(TAG, "Error %f.2", new_speed);
+    if(last_pulse_count % 500 == 0 && last_pulse_count != 0){
+        ESP_LOGI(TAG, "speed %f.2", speed);
+        ESP_LOGI(TAG, "throtle %d.2", throtle);
+    }
+        
+
+    //ESP_LOGI(TAG, "Error %f.2", speed);
     motor_control_direction new_direction = new_speed > 0 ? MOTOR_CONTROL_DIRECTION_FORWARD : MOTOR_CONTROL_DIRECTION_BACKWARD;
         
     motor_set_direction(motor, new_direction);
@@ -98,19 +112,20 @@ static void pid_loop_cb(void *args)
     static int last_pulse_count_a = 0;
     static int last_pulse_count_b = 0;
     static int32_t throtle = 0;
-    static int32_t stearing = 0;
+    static int32_t steering = 0;
     motor_control_context_t *ctx = (motor_control_context_t *)args;
     pid_ctrl_block_handle_t pid_ctrl_a = ctx->pid_ctrl_a;
     pid_ctrl_block_handle_t pid_ctrl_b = ctx->pid_ctrl_b;
     motor_control_handle_t motor_a = ctx->motor_control_a;
     motor_control_handle_t motor_b = ctx->motor_control_b;
-    int32_t new_throtle = 0;
-    if(xQueueReceiveFromISR(ctx->throtle_queue, &new_throtle, NULL) == pdPASS ){
-        throtle = new_throtle;
+    motor_control_input_t input;
+    if(xQueueReceiveFromISR(ctx->throtle_queue, &input, NULL) == pdPASS ){
+        throtle = input.throtle;
+        steering = input.steering;
     }
     //ESP_LOGI(TAG, "Throtle: %d", (int)throtle);
-    last_pulse_count_a = pid_loop(motor_a, pid_ctrl_a, throtle, last_pulse_count_a);
-    last_pulse_count_b = pid_loop(motor_b, pid_ctrl_b, throtle, last_pulse_count_b);
+    last_pulse_count_a = pid_loop(motor_a, pid_ctrl_a, throtle, steering, last_pulse_count_a, false);
+    last_pulse_count_b = pid_loop(motor_b, pid_ctrl_b, throtle, steering, last_pulse_count_b, true);
     
 }
 
@@ -124,7 +139,7 @@ void app_main(void)
         .throtle_queue = NULL,
     };
 
-    motor_ctrl_ctx.throtle_queue = xQueueCreate(1, sizeof(int32_t));
+    motor_ctrl_ctx.throtle_queue = xQueueCreate(1, sizeof(struct motor_control_input_t));
 
     pwm_capture_handle_t capture_a =NULL;
 
@@ -252,7 +267,11 @@ void app_main(void)
 
         //ESP_LOGI(TAG, "Speed: %d", (int)speed);
         //ESP_LOGI(TAG, "Current PWM A: %d ", (int)tof_ticks_b.width_us);
-        xQueueOverwrite(motor_ctrl_ctx.throtle_queue, &throtle);      
+        motor_control_input_t input = {
+            .throtle = throtle,
+            .steering = steering,
+        };
+        xQueueOverwrite(motor_ctrl_ctx.throtle_queue, &input);      
 
     }
 }
