@@ -6,5 +6,16 @@
   ],
   "idf.flashType": "UART",
   "idf.port": "/dev/ttyUSB0",
-  "ros.distro": "iron"
+  "ros.distro": "iron",
+  "files.associations": {
+    "*.tcc": "c",
+    "ratio": "c",
+    "system_error": "c",
+    "array": "c",
+    "functional": "c",
+    "regex": "c",
+    "tuple": "c",
+    "type_traits": "c",
+    "utility": "c"
+  }
 }

@@ -11,7 +11,7 @@
 
 typedef struct motor_control_t *motor_control_handle_t;
 
-typedef enum {
+typedef enum motor_control_direction {
     MOTOR_CONTROL_DIRECTION_FORWARD,
     MOTOR_CONTROL_DIRECTION_BACKWARD,
     MOTOR_CONTROL_DIRECTION_BRAKE,
