@@ -1,0 +1,4 @@
+dependencies:
+  espressif/pid_ctrl: ">=0.2.0"
+  espressif/bdc_motor: ">=0.1.0"
+
